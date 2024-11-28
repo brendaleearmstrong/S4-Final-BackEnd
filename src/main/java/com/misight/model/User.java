@@ -1,13 +1,15 @@
 package com.misight.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "users")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,7 +28,6 @@ public class User {
     )
     private Set<Privileges> privileges = new HashSet<>();
 
-    // Constructors
     public User() {}
 
     public User(String username, String password) {
@@ -34,7 +35,6 @@ public class User {
         this.password = password;
     }
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -77,7 +77,6 @@ public class User {
         privilege.getUsers().remove(this);
     }
 
-    // Equals and hashCode
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

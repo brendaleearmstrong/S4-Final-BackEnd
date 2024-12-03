@@ -1,80 +1,53 @@
 package com.misight.service;
 
 import com.misight.model.User;
-import com.misight.model.Privileges;
+import com.misight.model.exception.ResourceNotFoundException;
 import com.misight.repository.UserRepo;
-import com.misight.repository.PrivilegesRepo;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 @Service
 @Transactional
 public class UserService {
-    private final UserRepo userRepository;
-    private final PrivilegesRepo privilegesRepository;
-    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepo userRepository, PrivilegesRepo privilegesRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.privilegesRepository = privilegesRepository;
-        this.passwordEncoder = passwordEncoder;
+    private final UserRepo userRepo;
+
+    @Autowired
+    public UserService(UserRepo userRepo) {
+        this.userRepo = userRepo;
+    }
+
+    public User createUser(User user) {
+        return userRepo.save(user);
+    }
+
+    public User getUserById(Long id) {
+        return userRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
     }
 
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        return userRepo.findAll();
     }
 
-    public Optional<User> getUserById(Long id) {
-        return userRepository.findById(id);
-    }
+    public User updateUser(Long id, User userDetails) {
+        User user = getUserById(id);
 
-    public Optional<User> getUserByUsername(String username) {
-        return userRepository.findByUsernameWithPrivileges(username);
-    }
+        user.setUsername(userDetails.getUsername());
+        user.setPassword(userDetails.getPassword());
+        user.setPrivileges(userDetails.getPrivileges());
 
-    public User createUser(String username, String password, Set<String> privilegeNames) {
-        if (userRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException("Username already exists");
-        }
-
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password));
-
-        if (privilegeNames != null && !privilegeNames.isEmpty()) {
-            Set<Privileges> privileges = privilegesRepository.findByNameIn(privilegeNames);
-            user.setPrivileges(privileges);
-        }
-
-        return userRepository.save(user);
-    }
-
-    public Optional<User> updateUser(Long id, String username, String password, Set<String> privilegeNames) {
-        return userRepository.findById(id)
-                .map(user -> {
-                    if (!user.getUsername().equals(username) && userRepository.existsByUsername(username)) {
-                        throw new IllegalArgumentException("Username already exists");
-                    }
-
-                    user.setUsername(username);
-                    if (password != null && !password.isEmpty()) {
-                        user.setPassword(passwordEncoder.encode(password));
-                    }
-
-                    if (privilegeNames != null && !privilegeNames.isEmpty()) {
-                        Set<Privileges> privileges = privilegesRepository.findByNameIn(privilegeNames);
-                        user.setPrivileges(privileges);
-                    }
-
-                    return userRepository.save(user);
-                });
+        return userRepo.save(user);
     }
 
     public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+        if (!userRepo.existsById(id)) {
+            throw new ResourceNotFoundException("User not found with ID: " + id);
+        }
+        userRepo.deleteById(id);
     }
 }

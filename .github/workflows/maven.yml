@@ -1,0 +1,71 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for PostgreSQL..."
+            sleep 5
+          done
+
+      - name: Set up environment variables
+        env:
+          SPRING_DATASOURCE_URL: "jdbc:postgresql://localhost:5432/testdb"
+          SPRING_DATASOURCE_USERNAME: "postgres"
+          SPRING_DATASOURCE_PASSWORD: "password"
+        run: echo "Environment variables set."
+
+      - name: Build with Maven (skip tests)
+        run: mvn -B package -DskipTests
+
+      # Uncomment this if you want to run the minimal `contextLoads` test
+      # - name: Run tests
+      #   env:
+      #     SPRING_DATASOURCE_URL: "jdbc:postgresql://localhost:5432/testdb"
+      #     SPRING_DATASOURCE_USERNAME: "postgres"
+      #     SPRING_DATASOURCE_PASSWORD: "password"
+      #   run: mvn test

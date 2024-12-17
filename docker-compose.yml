@@ -1,35 +1,16 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15
-    container_name: postgres
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: misight_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./misight_dump.sql:/docker-entrypoint-initdb.d/misight_dump.sql
-
   springboot:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: springboot
     restart: always
-    depends_on:
-      - postgres
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/misight_db
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://misight-db.cfmiw488ur7i.us-east-1.rds.amazonaws.com:5432/postgres
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: admin
+      SPRING_DATASOURCE_PASSWORD: admin2024
     ports:
       - "8080:8080"
-
-volumes:
-  postgres_data:
-

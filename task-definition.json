@@ -1,68 +1,36 @@
 {
-  "family": "s4-final-task",
-  "containerDefinitions": [
-    {
-      "name": "springboot",
-      "image": "022229768579.dkr.ecr.us-east-1.amazonaws.com/s4-final-backend-springboot:latest",
-      "memory": 512,
-      "cpu": 256,
-      "essential": true,
-      "portMappings": [
+    "family": "misight-backend",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::022229768579:role/misight-ecs-execution-role",
+    "taskRoleArn": "arn:aws:iam::022229768579:role/misight-ecs-task-role",
+    "containerDefinitions": [
         {
-          "containerPort": 8080,
-          "hostPort": 8080,
-          "protocol": "tcp"
+            "name": "misight-backend",
+            "image": "022229768579.dkr.ecr.us-east-1.amazonaws.com/misight-backend:latest",
+            "portMappings": [
+                {
+                    "containerPort": 8080,
+                    "protocol": "tcp"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/misight-backend",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs",
+                    "awslogs-create-group": "true"
+                }
+            },
+            "environment": [
+                {
+                    "name": "SPRING_PROFILES_ACTIVE",
+                    "value": "prod"
+                }
+            ]
         }
-      ],
-      "environment": [
-        {
-          "name": "SPRING_DATASOURCE_URL",
-          "value": "jdbc:postgresql://postgres:5432/misight_db"
-        },
-        {
-          "name": "SPRING_DATASOURCE_USERNAME",
-          "value": "postgres"
-        },
-        {
-          "name": "SPRING_DATASOURCE_PASSWORD",
-          "value": "admin"
-        }
-      ]
-    },
-    {
-      "name": "postgres",
-      "image": "022229768579.dkr.ecr.us-east-1.amazonaws.com/s4-final-backend-postgres:latest",
-      "memory": 512,
-      "cpu": 256,
-      "essential": true,
-      "portMappings": [
-        {
-          "containerPort": 5432,
-          "hostPort": 5432,
-          "protocol": "tcp"
-        }
-      ],
-      "environment": [
-        {
-          "name": "POSTGRES_DB",
-          "value": "misight_db"
-        },
-        {
-          "name": "POSTGRES_USER",
-          "value": "postgres"
-        },
-        {
-          "name": "POSTGRES_PASSWORD",
-          "value": "admin"
-        }
-      ]
-    }
-  ],
-  "requiresCompatibilities": [
-    "FARGATE"
-  ],
-  "networkMode": "awsvpc",
-  "memory": "1GB",
-  "cpu": "0.5 vCPU",
-  "executionRoleArn": "arn:aws:iam::022229768579:role/ecsTaskExecutionRole"
+    ]
 }

@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Service for MiSight Backend
+
+Resources:
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: misight-cluster
+
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: misight-backend
+      Cluster: !Ref ECSCluster
+      TaskDefinition: arn:aws:ecs:us-east-1:022229768579:task-definition/misight-backend:1
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - subnet-0210c8c0d6edc32fe
+            - subnet-0f1214685a78f3ca6
+          SecurityGroups:
+            - sg-0d85a33bfdeba93ce
+      LoadBalancers:
+        - ContainerName: misight-backend
+          ContainerPort: 8080
+          TargetGroupArn: arn:aws:elasticloadbalancing:us-east-1:022229768579:targetgroup/misigh-ALBTa-Y3WU4BKRI6NF/9a7f56e59afadb2c
+
+Outputs:
+  ClusterName:
+    Description: The name of the ECS cluster
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub ${AWS::StackName}-ClusterName
+
+  ServiceName:
+    Description: The name of the ECS service
+    Value: !Ref ECSService
+    Export:
+      Name: !Sub ${AWS::StackName}-ServiceName
